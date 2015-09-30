@@ -226,7 +226,6 @@ public class Controller implements Initializable {
             out = new ObjectOutputStream(socket.getOutputStream());
             out.writeObject(ID);
             isConnected.set(true);
-//todo this !!!
             Service<Void> inputService = new Service<Void>() {
                 @Override
                 protected Task<Void> createTask() {
