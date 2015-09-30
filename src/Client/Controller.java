@@ -1,78 +1,178 @@
 package Client;
 
-import javafx.beans.binding.BooleanBinding;
+import Server.Message;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
+import javafx.geometry.Insets;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 /**
  * Created by Igor Klimov on 9/22/2015.
  */
 public class Controller implements Initializable {
-    @FXML
-    private Button button7;
-    @FXML
-    private Button button1;
-    @FXML
-    private VBox root;
+
+    public AnchorPane root;
+    public ScrollPane scroll;
+    public VBox vbox;
     @FXML
     private TextField textArea;
     @FXML
-    private TextArea result;
+    private Label emailField;
+    @FXML
+    private ListView<String> friendsList;
     private Socket socket;
-    private PrintStream out;
+    private ObjectOutputStream out;
     private SimpleBooleanProperty isConnected = new SimpleBooleanProperty(false);
-    private volatile Deque<String> outputDeque = new ArrayDeque<>();
-    private volatile Deque<String> inputDeque = new ArrayDeque<>();
+    private volatile Deque<Message> outputDeque = new ArrayDeque<>();
+    private static volatile HashMap<Integer, ArrayDeque<Message>> inputDeque = new HashMap<>();
+    private static volatile HashMap<Integer, ObservableList<Message>> cachedMessages = new HashMap<>();
+    static String email;
+    static int ID;
+    static int toID;
+    static ObservableMap<Integer, String> friends = FXCollections.observableHashMap();
+    SimpleDoubleProperty doubleProperty = new SimpleDoubleProperty();
+    Service<HBox> resultSetter;
+    Service<Void> outputService;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        doubleProperty.bind(vbox.heightProperty());
+        doubleProperty.addListener((observable, oldValue, newValue) -> scroll.setVvalue(scroll.getVmax()));
+        ObservableList<String> list = FXCollections.observableArrayList();
+        HashMap<String, Integer> map = new HashMap<>();
+        for (Integer id : friends.keySet()) {
+            map.put(friends.get(id), id);
+        }
+        list.addAll(map.keySet().stream().collect(Collectors.toList()));
+        textArea.setDisable(true);
+        emailField.setText(email);
         textArea.selectPositionCaret(0);
-        textArea.disableProperty().bind(new BooleanBinding() {
-            {
-                bind(isConnected);
-            }
-
-            @Override
-            protected boolean computeValue() {
-                return !isConnected.getValue();
+        friendsList.setItems(list);
+        friendsList.setOnMouseClicked(e -> {
+            Integer selectedItem = map.get(friendsList.getSelectionModel().getSelectedItem());
+            if (selectedItem != null) {
+                textArea.setDisable(false);
+                toID = selectedItem;
+                vbox.getChildren().clear();
+                if (cachedMessages.containsKey(toID) && cachedMessages.get(toID).size() > 0) {
+                    cachedMessages.get(toID).sort((o1, o2) -> o1.getLocalDT().compareTo(o2.getLocalDT()));
+                    for (Message message : cachedMessages.get(toID)) {
+                        HBox msgLine = createMessageLine(message);
+                        String s = message.getLocalDT().format(DateTimeFormatter.ofPattern("hh:mm a"));
+                        int size = vbox.getChildren().size();
+                        if (size > 0) {
+                            HBox line = (HBox) vbox.getChildren().get(size - 1);
+                            VBox txbox = (VBox) line.getChildren().get(0);
+                            VBox timebox = (VBox) line.getChildren().get(1);
+                            Label l = (Label) txbox.getChildren().get(0);
+                            Label tim = (Label) timebox.getChildren().get(0);
+                            double top = msgLine.getPadding().getTop();
+                            if (top == 5 && s.equals(tim.getText())) {
+                                l.setText(l.getText() + "\n" + message.getMsg());
+                            } else {
+                                vbox.getChildren().addAll(msgLine);
+                            }
+                        } else {
+                            vbox.getChildren().addAll(msgLine);
+                        }
+                    }
+                    inputDeque.get(toID).clear();
+                    cachedMessages.get(toID).addListener((ListChangeListener<Message>) c -> {
+                        resultSetter = new Service<HBox>() {
+                            @Override
+                            protected Task<HBox> createTask() {
+                                return new Task<HBox>() {
+                                    @Override
+                                    protected HBox call() throws Exception {
+                                        if (inputDeque.containsKey(toID) && inputDeque.get(toID).size() > 0) {
+                                            Message poll;
+                                            if ((poll = inputDeque.get(toID).poll()) != null) {
+                                                HBox msgLine = createMessageLine(poll);
+                                                updateValue(msgLine);
+                                            }
+                                        }
+                                        return null;
+                                    }
+                                };
+                            }
+                        };
+                        resultSetter.valueProperty().addListener((observable, oldValue, newValue) -> {
+                            if (newValue != null) {
+                                VBox ttbox = (VBox) newValue.getChildren().get(0);
+                                VBox timmbox = (VBox) newValue.getChildren().get(1);
+                                Label la = (Label) ttbox.getChildren().get(0);
+                                Label ti = (Label) timmbox.getChildren().get(0);
+                                String s = ti.getText();
+                                int size = vbox.getChildren().size();
+                                if (size > 0) {
+                                    HBox line = (HBox) vbox.getChildren().get(size - 1);
+                                    VBox txbox = (VBox) line.getChildren().get(0);
+                                    VBox timebox = (VBox) line.getChildren().get(1);
+                                    Label l = (Label) txbox.getChildren().get(0);
+                                    Label tim = (Label) timebox.getChildren().get(0);
+                                    double top = newValue.getPadding().getTop();
+                                    if (top == 5 && s.equals(tim.getText())) {
+                                        l.setText(l.getText() + "\n" + la.getText());
+                                    } else {
+                                        vbox.getChildren().addAll(newValue);
+                                    }
+                                } else {
+                                    vbox.getChildren().addAll(newValue);
+                                }
+                            }
+                        });
+                        resultSetter.start();
+                    });
+                }
             }
         });
+
+        for (Integer id : friends.keySet()) {
+            inputDeque.put(id, new ArrayDeque<>());
+            cachedMessages.put(id, FXCollections.observableArrayList());
+        }
         textArea.setOnKeyPressed(event -> {
             if (event.getCode().equals(KeyCode.ENTER)) {
                 cashMessage();
             }
         });
-        button1.setOnAction(e -> doConnect(1,7));
-        button7.setOnAction(e -> doConnect(7,1));
-    }
-
-    public void doConnect(int client, int connectTo) {
-        try {
-            socket = new Socket(InetAddress.getByName("192.168.1.166"), 7070);
-            out = new PrintStream(socket.getOutputStream(), true, "windows-1251");
-            out.println(client);
-            out.println(connectTo);
-            isConnected.set(true);
+        doConnect();
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             root.getScene().getWindow().setOnCloseRequest(event -> {
                 try {
                     closeConnection();
@@ -80,34 +180,69 @@ public class Controller implements Initializable {
                     e.printStackTrace();
                 }
             });
-            Service<Void> resultSetter = new Service<Void>() {
-                @Override
-                protected Task<Void> createTask() {
-                    return new Task<Void>() {
-                        @Override
-                        protected Void call() throws Exception {
-                            while (isConnected.get()) {
-                                if (inputDeque.size() > 0) {
-                                    System.out.println("Setting result");
-                                    result.appendText(inputDeque.poll() + "\n");
-                                }
-                            }
-                            return null;
-                        }
-                    };
-                }
-            };
+        }).start();
+    }
+
+    private HBox createMessageLine(Message message) {
+        Label text = new Label(message.getMsg());
+        if (message.getFromID() == ID) {
+            text.setStyle("-fx-background-color:  rgba(127, 255, 212, 0.44); -fx-background-radius:  5");
+        } else {
+            text.setStyle("-fx-background-color:  rgba(153, 255, 146, 0.44); -fx-background-radius: 5");
+        }
+        text.setPadding(new Insets(5, 20, 5, 10));
+        text.setWrapText(true);
+        text.setPrefWidth(165);
+        text.setFont(Font.font(14));
+        Label time = new Label(message.getLocalDT().format(DateTimeFormatter.ofPattern("hh:mm a")));
+        time.setStyle("-fx-text-fill: cadetblue");
+        HBox msgLine = new HBox();
+        VBox textBox = new VBox();
+        int size = vbox.getChildren().size();
+        if (size > 0) {
+            HBox node = (HBox) vbox.getChildren().get(size - 1);
+            VBox v = (VBox) node.getChildren().get(0);
+            Insets prev = v.getPadding();
+
+            textBox.setPadding(new Insets(0, 20, 0, message.getFromID() == ID ? 25 : 0));
+            if (textBox.getPadding().getLeft() != prev.getLeft()) {
+                msgLine.setPadding(new Insets(10, 0, 0, 0));
+            } else {
+                msgLine.setPadding(new Insets(5, 0, 0, 0));
+            }
+        }
+
+        VBox timeBox = new VBox();
+        textBox.setPrefWidth(200);
+        textBox.getChildren().add(text);
+        timeBox.getChildren().add(time);
+        msgLine.getChildren().addAll(textBox, timeBox);
+        return msgLine;
+    }
+
+    public void doConnect() {
+        try {
+            socket = new Socket(InetAddress.getByName("192.168.1.166"), 7070);
+            out = new ObjectOutputStream(socket.getOutputStream());
+            out.writeObject(ID);
+            isConnected.set(true);
+//todo this !!!
             Service<Void> inputService = new Service<Void>() {
                 @Override
                 protected Task<Void> createTask() {
                     return new Task<Void>() {
                         @Override
                         protected Void call() throws Exception {
-                            try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "windows-1251"))) {
+                            try (ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
                                 while (isConnected.get()) {
-                                    String msg = in.readLine();
-                                    System.out.println("got ::" + msg);
-                                    inputDeque.add(msg);
+                                    Message msg = (Message) in.readObject();
+                                    if (msg.getFromID() == ID) {
+                                        inputDeque.get(msg.getToID()).add(msg);
+                                        cachedMessages.get(msg.getToID()).add(msg);
+                                    } else {
+                                        inputDeque.get(msg.getFromID()).add(msg);
+                                        cachedMessages.get(msg.getFromID()).add(msg);
+                                    }
                                 }
                             }
                             return null;
@@ -115,56 +250,41 @@ public class Controller implements Initializable {
                     };
                 }
             };
-            Service<Void> outputService = new Service<Void>() {
+            outputService = new Service<Void>() {
                 @Override
                 protected Task<Void> createTask() {
                     return new Task<Void>() {
                         @Override
                         protected Void call() throws Exception {
-                            while (true) {
-                                if (!isConnected.get()) {
-                                    return null;
+//                            while (true) {
+//                                if (!isConnected.get()) {
+//                                    return null;
+//                                }
+                                if (outputDeque.size() > 0) {
+                                    out.writeObject(outputDeque.poll());
                                 }
-                                if (outputDeque.size()> 0) {
-                                    System.out.println("sending " + outputDeque.peek());
-                                    out.println(outputDeque.poll());
-                                }
-                            }
+//                            }
+                            return null;
                         }
                     };
                 }
             };
-            resultSetter.start();
             inputService.start();
-            outputService.start();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-    }
-
-    public void doDisconnect(ActionEvent actionEvent) {
-        if (isConnected.getValue()) {
-            System.out.println("Disconnect");
-            try {
-                closeConnection();
-                isConnected.set(false);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     private void cashMessage() {
-        outputDeque.add(textArea.getText());
+        outputDeque.add(new Message(textArea.getText(), LocalDateTime.now(), ID, toID));
+        outputService.restart();
         textArea.clear();
         textArea.selectPositionCaret(0);
     }
 
     private void closeConnection() throws IOException {
-        out.println("done");
+        out.writeObject(new Message("done", LocalDateTime.now(), 0, 0));
         socket.close();
         out.close();
     }
-
 }

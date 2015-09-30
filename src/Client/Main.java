@@ -6,19 +6,22 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.ArrayDeque;
+
 /**
  * Created by Igor Klimov on 9/22/2015.
  */
 public class Main extends Application {
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent parent = FXMLLoader.load(getClass().getResource("view.fxml"));
+        Parent parent = FXMLLoader.load(getClass().getResource("login.fxml"));
         Scene scene = new Scene(parent);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         launch();
     }
 }
