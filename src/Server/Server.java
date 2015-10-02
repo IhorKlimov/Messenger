@@ -1,5 +1,9 @@
 package Server;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,9 +18,9 @@ import java.util.HashMap;
 
 public class Server {
     static HashMap<Integer, ObjectOutputStream> outputMap = new HashMap<>();
-    static volatile HashMap<Integer, ArrayDeque<Message>> messageQue = new HashMap<>();
+    static HashMap<Integer, ObservableList<Message>> messageQue = new HashMap<>();
     static volatile ArrayDeque<Message> dbQue = new ArrayDeque<>();
-
+    static ListChangeListener<Message> ch;
 
     public static void main(String[] args) {
 //        database saver every 5 min or till somebody logs out
@@ -60,7 +64,12 @@ public class Server {
                             e.printStackTrace();
                         }
                         Message msg;
-                        outputMap.put(fromID, out);
+                        if (!outputMap.containsKey(fromID)) {
+                            outputMap.put(fromID, out);
+                        } else {
+                            outputMap.remove(fromID);
+                            outputMap.put(fromID, out);
+                        }
 
 //                        read my messages
                         Thread t = new Thread(() -> {
@@ -83,16 +92,38 @@ public class Server {
                                 while (localQue.size() > 0) {
                                     outputMap.get(fromID).writeObject(localQue.poll());
                                 }
-                                while (true) {
-                                    if (messageQue.get(fromID).size() > 0) {
-                                        outputMap.get(fromID).writeObject(messageQue.get(fromID).poll());
-                                    }
-                                    try {
-                                        Thread.sleep(300_000);
-                                    } catch (InterruptedException e) {
-//                                        NOP
-                                    }
+//                                while (true) {
+//                                    try {
+//                                        Thread.sleep(300_000);
+//                                    } catch (InterruptedException e) {
+////                                        NOP
+//                                    }
+//                                    if (messageQue.get(fromID).size() > 0) {
+//
+//                                        outputMap.get(fromID).writeObject(messageQue.get(fromID).poll());
+//                                    }
+//
+//                                }
+                                for (Message message : messageQue.get(fromID)) {
+                                    outputMap.get(fromID).writeObject(message);
                                 }
+                                ch = c -> {
+                                    while (c.next()) {
+                                        if (messageQue.get(fromID).size() > 0 && messageQue.get(fromID).size() > c.getFrom()
+                                                && messageQue.get(fromID).get(c.getFrom()) != null
+                                                && outputMap.containsKey(fromID) ) {
+                                            try {
+                                                Message message = messageQue.get(fromID).get(c.getFrom());
+                                                System.out.println("sending " + message.getMsg());
+                                                messageQue.get(fromID).remove(c.getFrom());
+                                                outputMap.get(fromID).writeObject(message);
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    }
+                                };
+                                messageQue.get(fromID).addListener(ch);
                             } catch (SQLException | IOException e) {
                                 e.printStackTrace();
                             }
@@ -103,14 +134,17 @@ public class Server {
                             if (msg.getMsg().equals("done")) {
                                 dbThread.interrupt();
                                 t.stop();
+                                outputMap.remove(fromID);
+                                messageQue.get(fromID).removeListener(ch);
                                 return;
+                            } else {
+                                messageQue.get(fromID).add(msg);
+                                messageQue.get(msg.getToID()).add(msg);
+                                dbQue.add(msg);
+                                System.out.println("added " + msg.getMsg());
                             }
-                            messageQue.get(fromID).add(msg);
-                            messageQue.get(msg.getToID()).add(msg);
-                            dbQue.add(msg);
-                            t.interrupt();
-                            System.out.println("added " + msg.getMsg());
                         }
+
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
@@ -136,18 +170,19 @@ public class Server {
         }
         for (Integer id : messageQue.keySet()) {
             messageQue.get(id).clear();
+            System.out.println(messageQue.get(id).size() +  " sieze");
         }
     }
 
     private static void createMessageHistory(int fromID, int sendToID) {
         if (!messageQue.containsKey(fromID)) {
             System.out.println("Creating a que");
-            ArrayDeque<Message> localDeque = new ArrayDeque<>();
+            ObservableList<Message> localDeque = FXCollections.observableArrayList();
             messageQue.put(fromID, localDeque);
         }
         if (!messageQue.containsKey(sendToID)) {
             System.out.println("Creating a que");
-            ArrayDeque<Message> localDeque = new ArrayDeque<>();
+            ObservableList<Message> localDeque = FXCollections.observableArrayList();
             messageQue.put(sendToID, localDeque);
         }
     }

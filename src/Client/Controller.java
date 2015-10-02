@@ -15,7 +15,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -44,8 +44,7 @@ public class Controller implements Initializable {
     public AnchorPane root;
     public ScrollPane scroll;
     public VBox vbox;
-    @FXML
-    private TextField textArea;
+    public TextArea textArea;
     @FXML
     private Label emailField;
     @FXML
@@ -54,8 +53,8 @@ public class Controller implements Initializable {
     private ObjectOutputStream out;
     private SimpleBooleanProperty isConnected = new SimpleBooleanProperty(false);
     private volatile Deque<Message> outputDeque = new ArrayDeque<>();
-    private static volatile HashMap<Integer, ArrayDeque<Message>> inputDeque = new HashMap<>();
-    private static volatile HashMap<Integer, ObservableList<Message>> cachedMessages = new HashMap<>();
+    private volatile HashMap<Integer, ArrayDeque<Message>> inputDeque = new HashMap<>();
+    private volatile HashMap<Integer, ObservableList<Message>> cachedMessages = new HashMap<>();
     static String email;
     static int ID;
     static int toID;
@@ -73,17 +72,19 @@ public class Controller implements Initializable {
         for (Integer id : friends.keySet()) {
             map.put(friends.get(id), id);
         }
+
         list.addAll(map.keySet().stream().collect(Collectors.toList()));
         textArea.setDisable(true);
         emailField.setText(email);
-        textArea.selectPositionCaret(0);
         friendsList.setItems(list);
         friendsList.setOnMouseClicked(e -> {
+
             Integer selectedItem = map.get(friendsList.getSelectionModel().getSelectedItem());
             if (selectedItem != null) {
                 textArea.setDisable(false);
                 toID = selectedItem;
                 vbox.getChildren().clear();
+
                 if (cachedMessages.containsKey(toID) && cachedMessages.get(toID).size() > 0) {
                     cachedMessages.get(toID).sort((o1, o2) -> o1.getLocalDT().compareTo(o2.getLocalDT()));
                     for (Message message : cachedMessages.get(toID)) {
@@ -106,54 +107,55 @@ public class Controller implements Initializable {
                             vbox.getChildren().addAll(msgLine);
                         }
                     }
-                    inputDeque.get(toID).clear();
-                    cachedMessages.get(toID).addListener((ListChangeListener<Message>) c -> {
-                        resultSetter = new Service<HBox>() {
-                            @Override
-                            protected Task<HBox> createTask() {
-                                return new Task<HBox>() {
-                                    @Override
-                                    protected HBox call() throws Exception {
-                                        if (inputDeque.containsKey(toID) && inputDeque.get(toID).size() > 0) {
-                                            Message poll;
-                                            if ((poll = inputDeque.get(toID).poll()) != null) {
-                                                HBox msgLine = createMessageLine(poll);
-                                                updateValue(msgLine);
-                                            }
+                }
+
+                inputDeque.get(toID).clear();
+                cachedMessages.get(toID).addListener((ListChangeListener<Message>) c -> {
+                    resultSetter = new Service<HBox>() {
+                        @Override
+                        protected Task<HBox> createTask() {
+                            return new Task<HBox>() {
+                                @Override
+                                protected HBox call() throws Exception {
+                                    if (inputDeque.containsKey(toID) && inputDeque.get(toID).size() > 0) {
+                                        Message poll;
+                                        if ((poll = inputDeque.get(toID).poll()) != null) {
+                                            HBox msgLine = createMessageLine(poll);
+                                            updateValue(msgLine);
                                         }
-                                        return null;
                                     }
-                                };
-                            }
-                        };
-                        resultSetter.valueProperty().addListener((observable, oldValue, newValue) -> {
-                            if (newValue != null) {
-                                VBox ttbox = (VBox) newValue.getChildren().get(0);
-                                VBox timmbox = (VBox) newValue.getChildren().get(1);
-                                Label la = (Label) ttbox.getChildren().get(0);
-                                Label ti = (Label) timmbox.getChildren().get(0);
-                                String s = ti.getText();
-                                int size = vbox.getChildren().size();
-                                if (size > 0) {
-                                    HBox line = (HBox) vbox.getChildren().get(size - 1);
-                                    VBox txbox = (VBox) line.getChildren().get(0);
-                                    VBox timebox = (VBox) line.getChildren().get(1);
-                                    Label l = (Label) txbox.getChildren().get(0);
-                                    Label tim = (Label) timebox.getChildren().get(0);
-                                    double top = newValue.getPadding().getTop();
-                                    if (top == 5 && s.equals(tim.getText())) {
-                                        l.setText(l.getText() + "\n" + la.getText());
-                                    } else {
-                                        vbox.getChildren().addAll(newValue);
-                                    }
+                                    return null;
+                                }
+                            };
+                        }
+                    };
+                    resultSetter.valueProperty().addListener((observable, oldValue, newValue) -> {
+                        if (newValue != null) {
+                            VBox ttbox = (VBox) newValue.getChildren().get(0);
+                            VBox timmbox = (VBox) newValue.getChildren().get(1);
+                            Label la = (Label) ttbox.getChildren().get(0);
+                            Label ti = (Label) timmbox.getChildren().get(0);
+                            String s = ti.getText();
+                            int size = vbox.getChildren().size();
+                            if (size > 0) {
+                                HBox line = (HBox) vbox.getChildren().get(size - 1);
+                                VBox txbox = (VBox) line.getChildren().get(0);
+                                VBox timebox = (VBox) line.getChildren().get(1);
+                                Label l = (Label) txbox.getChildren().get(0);
+                                Label tim = (Label) timebox.getChildren().get(0);
+                                double top = newValue.getPadding().getTop();
+                                if (top == 5 && s.equals(tim.getText())) {
+                                    l.setText(l.getText() + "\n" + la.getText());
                                 } else {
                                     vbox.getChildren().addAll(newValue);
                                 }
+                            } else {
+                                vbox.getChildren().addAll(newValue);
                             }
-                        });
-                        resultSetter.start();
+                        }
                     });
-                }
+                    resultSetter.start();
+                });
             }
         });
 
@@ -164,6 +166,7 @@ public class Controller implements Initializable {
         textArea.setOnKeyPressed(event -> {
             if (event.getCode().equals(KeyCode.ENTER)) {
                 cashMessage();
+                event.consume();
             }
         });
         doConnect();
@@ -199,12 +202,12 @@ public class Controller implements Initializable {
         HBox msgLine = new HBox();
         VBox textBox = new VBox();
         int size = vbox.getChildren().size();
+        textBox.setPadding(new Insets(0, 20, 0, message.getFromID() == ID ? 25 : 0));
         if (size > 0) {
             HBox node = (HBox) vbox.getChildren().get(size - 1);
             VBox v = (VBox) node.getChildren().get(0);
             Insets prev = v.getPadding();
 
-            textBox.setPadding(new Insets(0, 20, 0, message.getFromID() == ID ? 25 : 0));
             if (textBox.getPadding().getLeft() != prev.getLeft()) {
                 msgLine.setPadding(new Insets(10, 0, 0, 0));
             } else {
@@ -234,6 +237,7 @@ public class Controller implements Initializable {
                         protected Void call() throws Exception {
                             try (ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
                                 while (isConnected.get()) {
+
                                     Message msg = (Message) in.readObject();
                                     if (msg.getFromID() == ID) {
                                         inputDeque.get(msg.getToID()).add(msg);
@@ -241,6 +245,7 @@ public class Controller implements Initializable {
                                     } else {
                                         inputDeque.get(msg.getFromID()).add(msg);
                                         cachedMessages.get(msg.getFromID()).add(msg);
+
                                     }
                                 }
                             }
@@ -259,9 +264,9 @@ public class Controller implements Initializable {
 //                                if (!isConnected.get()) {
 //                                    return null;
 //                                }
-                                if (outputDeque.size() > 0) {
-                                    out.writeObject(outputDeque.poll());
-                                }
+                            if (outputDeque.size() > 0) {
+                                out.writeObject(outputDeque.poll());
+                            }
 //                            }
                             return null;
                         }
@@ -278,7 +283,6 @@ public class Controller implements Initializable {
         outputDeque.add(new Message(textArea.getText(), LocalDateTime.now(), ID, toID));
         outputService.restart();
         textArea.clear();
-        textArea.selectPositionCaret(0);
     }
 
     private void closeConnection() throws IOException {
