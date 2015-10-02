@@ -12,10 +12,7 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -45,6 +42,7 @@ public class Controller implements Initializable {
     public ScrollPane scroll;
     public VBox vbox;
     public TextArea textArea;
+    public TextField search;
     @FXML
     private Label emailField;
     @FXML
@@ -97,6 +95,8 @@ public class Controller implements Initializable {
                             VBox timebox = (VBox) line.getChildren().get(1);
                             Label l = (Label) txbox.getChildren().get(0);
                             Label tim = (Label) timebox.getChildren().get(0);
+                            Tooltip info = new Tooltip(message.getLocalDT().format(DateTimeFormatter.ofPattern("EEEE, MMMM d, u hh:mm a")));
+                            tim.setTooltip(info);
                             double top = msgLine.getPadding().getTop();
                             if (top == 5 && s.equals(tim.getText())) {
                                 l.setText(l.getText() + "\n" + message.getMsg());

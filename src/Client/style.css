@@ -1,0 +1,35 @@
+.scroll {
+    -fx-background-color: transparent;
+
+}
+.scroll .scroll-bar{
+    -fx-background-color: transparent;
+    -fx-border-color: derive(gray, 80%);
+
+}
+.scroll .scroll-bar .thumb{
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-background-color: derive(black, 80%);
+    -fx-background-insets: 0,0,0;
+}
+
+.list  {
+    -fx-background-color: transparent;
+
+}
+.list-cell{
+    -fx-font-size: 14px;
+    -fx-background-color: rgba(240, 255, 255, 0.57);
+}
+.list-cell:selected{
+    -fx-text-fill: black;
+    -fx-background-color: rgba(148, 170, 255, 0.57);
+}
+.tooltip{
+    -fx-background-color: rgba(250, 235, 215, 0.67);
+    -fx-text-fill: black;
+}
+#search{
+    -fx-background-color: transparent;
+}

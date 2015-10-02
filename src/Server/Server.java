@@ -170,7 +170,6 @@ public class Server {
         }
         for (Integer id : messageQue.keySet()) {
             messageQue.get(id).clear();
-            System.out.println(messageQue.get(id).size() +  " sieze");
         }
     }
 
