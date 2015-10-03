@@ -3,10 +3,13 @@
 <?import java.lang.*?>
 <?import java.net.*?>
 <?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -34,8 +37,13 @@
             </font>
         </TextArea>
         <Separator layoutX="109.0" layoutY="46.0" orientation="VERTICAL" prefHeight="442.0" prefWidth="3.0" />
-        <TextField fx:id="search" layoutX="25.0" layoutY="423.0" prefHeight="25.0" prefWidth="84.0" />
-      <Separator layoutX="26.0" layoutY="448.0" prefHeight="0.0" prefWidth="84.0" style="-fx-background-color: rgba(52, 40, 255, 0.53);" />
+        <TextField fx:id="search" layoutX="25.0" layoutY="428.0" prefHeight="25.0" prefWidth="84.0" />
+        <Separator layoutX="10.0" layoutY="448.0" prefHeight="2.0" prefWidth="100.0" style="-fx-background-color: rgba(52, 40, 255, 0.53);" />
+        <ImageView fitHeight="14.0" fitWidth="21.0" layoutX="10.0" layoutY="432.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@icon_search.png" />
+            </image>
+        </ImageView>
     </children>
     <stylesheets>
         <URL value="@style.css" />

@@ -6,8 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.util.ArrayDeque;
-
 /**
  * Created by Igor Klimov on 9/22/2015.
  */

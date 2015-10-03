@@ -3,6 +3,7 @@ package Server;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import res.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -25,7 +26,7 @@ public class Server {
     public static void main(String[] args) {
 //        database saver every 5 min or till somebody logs out
         Thread dbThread = new Thread(() -> {
-            try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/user", "root", "I0tN9N0R")) {
+            try (Connection connection = DriverManager.getConnection("jdbc:mysql://192.168.1.166:3306/user1", "IgorKlimov", "pass")) {
                 while (true) {
                     try {
                         Thread.sleep(300_000);
@@ -50,7 +51,7 @@ public class Server {
                     try (ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
                          ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
                         int fromID = (int) in.readObject();
-                        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/user", "root", "I0tN9N0R")) {
+                        try (Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.1.166:3306/user1", "IgorKlimov", "pass")) {
                             String sql = "SELECT * FROM link WHERE user_id = ?";
                             PreparedStatement statement = conn.prepareStatement(sql);
                             statement.setInt(1, fromID);
@@ -75,7 +76,7 @@ public class Server {
                         Thread t = new Thread(() -> {
 //                            read database message history
                             ArrayDeque<Message> localQue = new ArrayDeque<>();
-                            try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/user", "root", "I0tN9N0R")) {
+                            try (Connection connection = DriverManager.getConnection("jdbc:mysql://192.168.1.166:3306/user1", "IgorKlimov", "pass")) {
                                 String sql = "SELECT * FROM message WHERE fromID = ? || toID = ?";
                                 PreparedStatement statement = connection.prepareStatement(sql);
                                 statement.setInt(1, fromID);

@@ -1,6 +1,5 @@
 package Client;
 
-import Server.Message;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
@@ -9,15 +8,18 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import res.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -75,7 +77,7 @@ public class Controller implements Initializable {
         textArea.setDisable(true);
         emailField.setText(email);
         friendsList.setItems(list);
-        friendsList.setOnMouseClicked(e -> {
+        EventHandler<MouseEvent> mouseEventEventHandler = e -> {
 
             Integer selectedItem = map.get(friendsList.getSelectionModel().getSelectedItem());
             if (selectedItem != null) {
@@ -157,8 +159,15 @@ public class Controller implements Initializable {
                     resultSetter.start();
                 });
             }
+        };
+        friendsList.setOnMouseClicked(mouseEventEventHandler);
+        search.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 0) {
+                friendsList.setItems(list.filtered(s -> s.toLowerCase().contains(newValue.toLowerCase())));
+            } else {
+                friendsList.setItems(list);
+            }
         });
-
         for (Integer id : friends.keySet()) {
             inputDeque.put(id, new ArrayDeque<>());
             cachedMessages.put(id, FXCollections.observableArrayList());

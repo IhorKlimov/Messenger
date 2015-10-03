@@ -33,7 +33,7 @@ public class LoginController implements Initializable {
         String email = this.email.getText();
         String password = this.password.getText();
         if (!email.equals("") && !password.equals("")) {
-            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/user", "root", "I0tN9N0R")) {
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://192.168.1.166:3306/user1", "IgorKlimov", "pass")) {
                 Account acc = new Account(conn);
                 if (acc.userExists(email, password)) {
                     System.out.println("User found");

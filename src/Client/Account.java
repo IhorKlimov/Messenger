@@ -1,7 +1,5 @@
 package Client;
 
-import Client.Controller;
-
 import java.sql.*;
 
 import static java.sql.Types.INTEGER;
