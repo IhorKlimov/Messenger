@@ -2,21 +2,23 @@
     -fx-background-color: transparent;
 
 }
-.scroll .scroll-bar{
+.scroll .scroll-bar, .list .scroll-bar{
     -fx-background-color: transparent;
     -fx-border-color: derive(gray, 80%);
-
 }
-.scroll .scroll-bar .thumb{
+.list .scroll-bar{
+    -fx-pref-width: 8px;
+    -fx-border-color: transparent;
+}
+.scroll .scroll-bar .thumb, .list .scroll-bar .thumb{
     -fx-background-radius: 0;
     -fx-border-radius: 0;
-    -fx-background-color: derive(black, 80%);
+    -fx-background-color: derive(black, 100%);
     -fx-background-insets: 0,0,0;
 }
 
 .list  {
-    -fx-background-color: rgba(240, 255, 255, 0.57);
-
+    -fx-background-color: transparent;
 
 }
 .list-cell{

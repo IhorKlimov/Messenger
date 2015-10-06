@@ -7,6 +7,10 @@
     </database-info>
     <case-sensitivity plain-identifiers="lower" quoted-identifiers="lower"/>
     <schema name="" catalog="user1"/>
+    <table name="friend_request" schema="" catalog="user1" type="TABLE">
+      <column name="user_to_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="user_from_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+    </table>
     <table name="link" schema="" catalog="user1" type="TABLE">
       <column name="user_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
       <column name="friend_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
@@ -24,6 +28,7 @@
       <column name="photo" sqlType="VARCHAR" precision="45" scale="0" nullable="false" jdbcType="12"/>
       <column name="user_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
       <primary-key name="PRIMARY" columns="user_id"/>
+      <index name="email_UNIQUE" unique="true" columns="email"/>
       <index name="ID_UNIQUE" unique="true" columns="user_id"/>
     </table>
     <procedure name="ADD_FRIEND" schema="" catalog="user1" type="1">

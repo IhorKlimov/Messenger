@@ -29,7 +29,7 @@ public class LoginController implements Initializable {
 
     }
 
-    public void doLogin(ActionEvent actionEvent) {
+    public void doLogin() {
         String email = this.email.getText();
         String password = this.password.getText();
         if (!email.equals("") && !password.equals("")) {
@@ -39,6 +39,7 @@ public class LoginController implements Initializable {
                     System.out.println("User found");
                     Controller.ID = acc.getUserID(email, password);
                     Controller.email = email;
+                    Controller.name = acc.getName(Controller.ID);
                     acc.getFriends(Controller.ID);
                     Stage window = (Stage) root.getScene().getWindow();
                     window.close();

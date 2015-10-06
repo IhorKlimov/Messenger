@@ -3,16 +3,16 @@
 <?import java.lang.*?>
 <?import java.net.*?>
 <?import javafx.geometry.*?>
-<?import javafx.scene.image.*?>
+<?import javafx.scene.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 <?import java.net.URL?>
 
 <AnchorPane fx:id="root" maxHeight="529.0" prefHeight="508.0" prefWidth="441.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.Controller">
@@ -25,27 +25,62 @@
                 <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
             </padding>
         </ScrollPane>
-        <Label fx:id="emailField" layoutX="28.0" layoutY="14.0" prefHeight="20.0" prefWidth="195.0" text="Label" textAlignment="RIGHT">
+        <Region layoutX="-1.0" prefHeight="508.0" prefWidth="111.0" style="-fx-background-color: rgba(240, 255, 255, 0.57);" />
+        <Label fx:id="emailField" layoutX="28.0" layoutY="14.0" prefHeight="20.0" prefWidth="121.0" text="Label" textAlignment="RIGHT">
             <font>
                 <Font size="14.0" />
             </font>
         </Label>
-        <ListView fx:id="friendsList" layoutX="28.0" layoutY="46.0" prefHeight="357.0" prefWidth="84.0" styleClass="list" />
+        <ListView fx:id="friendsListView" layoutX="-1.0" layoutY="131.0" prefHeight="357.0" prefWidth="111.0" styleClass="list" />
         <TextArea fx:id="textArea" layoutX="136.0" layoutY="423.0" prefHeight="65.0" prefWidth="288.0" wrapText="true">
             <font>
                 <Font size="14.0" />
             </font>
         </TextArea>
-        <Separator layoutX="109.0" layoutY="46.0" orientation="VERTICAL" prefHeight="442.0" prefWidth="3.0" />
-        <TextField fx:id="search" layoutX="25.0" layoutY="428.0" prefHeight="25.0" prefWidth="84.0" />
-        <Separator layoutX="10.0" layoutY="448.0" prefHeight="2.0" prefWidth="100.0" style="-fx-background-color: rgba(52, 40, 255, 0.53);" />
-        <ImageView fitHeight="14.0" fitWidth="21.0" layoutX="10.0" layoutY="432.0" pickOnBounds="true" preserveRatio="true">
+        <Separator layoutX="109.0" orientation="VERTICAL" prefHeight="508.0" prefWidth="2.0" />
+        <TextField fx:id="search" layoutX="25.0" layoutY="68.0" prefHeight="25.0" prefWidth="72.0">
+         <font>
+            <Font size="14.0" />
+         </font></TextField>
+        <Separator layoutX="10.0" layoutY="91.0" prefHeight="2.0" prefWidth="100.0" style="-fx-background-color: rgba(52, 40, 255, 0.53);" />
+        <ImageView fitHeight="14.0" fitWidth="21.0" layoutX="10.0" layoutY="75.0" pickOnBounds="true" preserveRatio="true">
             <image>
-                <Image url="@icon_search.png" />
+                <Image url="@../res/icon_search.png" />
             </image>
         </ImageView>
+        <Label fx:id="requests" layoutX="29.0" layoutY="47.0" prefHeight="25.0" prefWidth="64.0" text="Requests" textFill="#20c340">
+            <cursor>
+                <Cursor fx:constant="HAND" />
+            </cursor>
+            <font>
+                <Font name="System Bold" size="14.0" />
+            </font>
+        </Label>
+        <ImageView fx:id="reqImg" fitHeight="14.0" fitWidth="179.0" layoutX="10.0" layoutY="52.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../res/exclamation-28996_640.png" />
+            </image>
+        </ImageView>
+        <Label fx:id="reqLabel" layoutX="203.0" layoutY="11.0" prefHeight="27.0" prefWidth="154.0" text="Friend Requests" textAlignment="RIGHT" textFill="#30a8c6" visible="false">
+            <font>
+                <Font name="System Bold" size="18.0" />
+            </font>
+        </Label>
+        <Label alignment="CENTER" layoutX="5.0" layoutY="104.0" prefHeight="17.0" prefWidth="100.0" text="Contacts" textFill="#4aab9e">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </Label>
+      <ImageView fx:id="cancel" fitHeight="20.0" fitWidth="26.0" layoutX="90.0" layoutY="73.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../res/close.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="HAND" />
+         </cursor>
+      </ImageView>
     </children>
     <stylesheets>
-        <URL value="@style.css" />
+        <URL value="@../res/style.css" />
     </stylesheets>
 </AnchorPane>
