@@ -68,7 +68,7 @@ public class Controller implements Initializable {
     private Label emailField;
     @FXML
     private ListView<Friend> friendsListView;
-
+//
     private Socket socket;
     private Socket requestsSocket;
     private ObjectOutputStream out;
